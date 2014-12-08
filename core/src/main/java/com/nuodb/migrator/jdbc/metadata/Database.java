@@ -47,8 +47,6 @@ import static org.apache.commons.lang3.StringUtils.split;
 
 public class Database extends IdentifiableBase implements HasSchemas {
 
-    private static final String SQL = "SQL";
-
     private final Map<Identifier, Catalog> catalogs = newLinkedHashMap();
 
     private Dialect dialect;
@@ -110,15 +108,6 @@ public class Database extends IdentifiableBase implements HasSchemas {
     }
 
     public String getEncoding() {
-        if(encoding!=null) {
-            if(encoding.startsWith(SQL)) {
-                String charset[] = encoding.split("_");
-                encoding = charset[1];
-            }else {
-                String charset[] = encoding.split("_");
-                encoding = charset[0];
-            }
-        }
         return encoding;
     }
 

@@ -67,7 +67,6 @@ public class SimpleDatabaseInspector extends MetaDataHandlerBase implements Insp
         if (logger.isDebugEnabled()) {
             logger.debug(format("Database info %s", databaseInfo));
         }
-        database.setEncoding(getCollation(inspectionContext, database));
         database.setDatabaseInfo(databaseInfo);
 
         database.setDialect(inspectionContext.getDialect());

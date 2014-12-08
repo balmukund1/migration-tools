@@ -51,6 +51,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 
 import java.nio.charset.Charset;
+import java.nio.charset.UnsupportedCharsetException;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
@@ -269,6 +270,7 @@ public class WriteQueryWork extends WorkForkJoinTaskBase {
     */
     private void checkEncoding() {
         checkDatabaseEncoding();
+        checkCatalogEncoding();
         checkColumnEncoding();
     }
 
@@ -277,26 +279,34 @@ public class WriteQueryWork extends WorkForkJoinTaskBase {
                 backupWriterContext.getDatabase().getEncoding());
     }
 
+    private void checkCatalogEncoding() {
+        checkCharset("Catalog ".concat(((TableRowSet)writeQuery.getRowSet()).getCatalog()),
+                backupWriterContext.getDatabase().getCatalogs().iterator().next().getEncoding());
+    }
     private void checkColumnEncoding() {
         Table table = ((WriteTable) writeQuery).getTable();
         Iterator<com.nuodb.migrator.jdbc.metadata.Column> columnIterator = table.getColumns().iterator();
 
         while(columnIterator.hasNext()) {
             com.nuodb.migrator.jdbc.metadata.Column column = columnIterator.next();
-            if (column.getEncoding() == null) continue;
-            checkCharset( "Column ".concat(table.getName().concat(".").concat(column.getName())), column.getEncoding());
+            if (column.getCharset() == null) continue;
+            checkCharset( "Column ".concat(table.getName().concat(".").concat(column.getName())), column.getCharset().toString());
         }
     }
 
     private void checkCharset(String type, String srcEncoding) {
         if(srcEncoding == null || output.getEncoding() == null) return;
+        try {
         scharset = Charset.forName(srcEncoding);
         tcharset = Charset.forName(output.getEncoding());
         if ((scharset != null) && (scharset.compareTo(tcharset) != 0)) {
             if (logger.isWarnEnabled()) {
                 logger.warn(format("%s encoding is: %s  :: target encoding is: %s ",type,scharset,tcharset));
+                }
             }
-        }
+        } catch(UnsupportedCharsetException unsupportedCharsetException) {
+            unsupportedCharsetException.printStackTrace();
+            }
     }
 
     @Override

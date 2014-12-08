@@ -67,4 +67,8 @@ public class SimpleCatalogInspector extends ManagedInspectorBase<Database, Inspe
     public boolean supportsScope(InspectionContext inspectionContext, InspectionScope inspectionScope) {
         return true;
     }
+
+    protected String getCollation(InspectionContext inspectionContext,String catalog) throws SQLException {
+        return null;
+    }
 }

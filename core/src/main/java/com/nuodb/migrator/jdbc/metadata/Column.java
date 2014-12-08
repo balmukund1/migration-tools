@@ -33,6 +33,7 @@ import com.nuodb.migrator.jdbc.type.JdbcTypeDesc;
 import com.nuodb.migrator.jdbc.type.JdbcTypeOptions;
 import com.nuodb.migrator.utils.ObjectUtils;
 
+import java.nio.charset.Charset;
 import java.util.Set;
 
 import static com.google.common.collect.Sets.newLinkedHashSet;
@@ -47,7 +48,6 @@ public class Column extends IdentifiableBase implements Field {
     public static final int DEFAULT_SIZE = 0;
     public static final int DEFAULT_PRECISION = 38;
     public static final int DEFAULT_SCALE = 0;
-    private static final String SQL = "SQL";
 
     private Table table;
 
@@ -85,6 +85,8 @@ public class Column extends IdentifiableBase implements Field {
      * Column encoding
      */
     private String encoding;
+
+    private Charset collation = null;
 
     private DefaultValue defaultValue;
 
@@ -237,20 +239,20 @@ public class Column extends IdentifiableBase implements Field {
     }
 
     public String getEncoding() {
-        if(encoding!=null) {
-            if(encoding.startsWith(SQL)) {
-                String charset[] = encoding.split("_");
-                encoding = charset[1];
-            }else {
-                String charset[] = encoding.split("_");
-                encoding = charset[0];
-            }
-        }
         return encoding;
     }
 
     public void setEncoding(String encoding) {
         this.encoding = encoding;
+    }
+
+    
+    public Charset getCharset() {
+        return collation;
+    }
+
+    public void setCharset(Charset collation) {
+        this.collation = collation;
     }
 
     public void setSequence(Sequence sequence) {

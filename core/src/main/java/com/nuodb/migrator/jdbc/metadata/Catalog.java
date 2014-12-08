@@ -40,6 +40,7 @@ public class Catalog extends IdentifiableBase implements HasSchemas {
 
     private Map<Identifier, Schema> schemas = newLinkedHashMap();
     private Database database;
+    private String encoding;
 
     public Catalog() {
         super(CATALOG);
@@ -131,6 +132,14 @@ public class Catalog extends IdentifiableBase implements HasSchemas {
             sequences.addAll(schema.getSequences());
         }
         return sequences;
+    }
+
+    public String getEncoding() {
+        return encoding;
+    }
+
+    public void setEncoding(String encoding) {
+        this.encoding = encoding;
     }
 
     @Override

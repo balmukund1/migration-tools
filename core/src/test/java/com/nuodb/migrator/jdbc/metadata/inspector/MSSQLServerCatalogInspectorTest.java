@@ -28,7 +28,7 @@ package com.nuodb.migrator.jdbc.metadata.inspector;
  */
 
 import static com.google.common.collect.Iterables.get;
-import static com.nuodb.migrator.jdbc.metadata.MetaDataType.DATABASE;
+import static com.nuodb.migrator.jdbc.metadata.MetaDataType.CATALOG;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Matchers.anyInt;
 import static org.mockito.Matchers.anyString;
@@ -39,22 +39,23 @@ import static org.testng.Assert.assertNotNull;
 import java.sql.DatabaseMetaData;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.ResultSetMetaData;
 import java.util.Collection;
 
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
-import com.nuodb.migrator.jdbc.metadata.Database;
+import com.nuodb.migrator.jdbc.metadata.Catalog;
 
 /**
  * @author Mukund
  */
 
-public class MSSQLServerDatabaseInspectorTest extends InspectorTestBase {
+public class MSSQLServerCatalogInspectorTest extends InspectorTestBase {
 
-    public MSSQLServerDatabaseInspectorTest() {
-        super(MSSQLServerDatabaseInspector.class);
+    public MSSQLServerCatalogInspectorTest() {
+        super(MSSQLServerCatalogInspector.class);
     }
 
     @Override
@@ -63,51 +64,52 @@ public class MSSQLServerDatabaseInspectorTest extends InspectorTestBase {
         super.setUp();
     }
 
-    @DataProvider(name = "getDatabaseData")
+    @DataProvider(name = "getCatalogData")
     public Object[][] createGetCollationData() throws Exception{
-        Database database = new Database();
-        database.setName("test");
-        database.setEncoding("latin1");
+        Catalog catalog = new Catalog();
+        catalog.setName("test");
+        catalog.setEncoding("latin1");
 
-        Database database1 = new Database();
-        database.setName("test1");
-        database.setEncoding("utf-8");
         return new Object[][] {
-                { database } ,
-                { database1 }
+                { catalog } 
         };
     }
 
-    @Test(dataProvider = "getDatabaseData")
-    public void testDatabaseCollation(Database db) throws Exception {
-        configureDatabaseCollationResultSet(db);
-        configureDatabaseInfo(db);
-        InspectionResults inspectionResults = getInspectionManager().inspect(getConnection(), DATABASE);
-        Collection<Database> dbs = inspectionResults.getObjects(DATABASE);
+    @Test(dataProvider = "getCatalogData")
+    public void testDatabaseCollation(Catalog catalog) throws Exception {
+        configureCatalogCollationResultSet(catalog);
+        configureCatalogInfo(catalog);
+        InspectionResults inspectionResults = getInspectionManager().inspect(getConnection(), CATALOG);
+        Collection<Catalog> catalogs = inspectionResults.getObjects(CATALOG);
 
-        assertNotNull(dbs);
-        assertEquals(dbs.size(), 1);
-        assertEquals(get(dbs, 0).getEncoding(), db.getEncoding());
+        assertNotNull(catalogs);
+        assertEquals(catalogs.size(), 1);
+        assertEquals(get(catalogs, 0).getEncoding(), catalog.getEncoding());
     }
 
-    private ResultSet configureDatabaseCollationResultSet(Database db) throws Exception{
+    private ResultSet configureCatalogCollationResultSet(Catalog catalog) throws Exception{
         PreparedStatement query = mock(PreparedStatement.class);
         given(getConnection().prepareStatement(anyString(), anyInt(), anyInt())).willReturn(query);
         given(getConnection().prepareStatement(anyString())).willReturn(query);
 
-        ResultSet dbResultSet = mock(ResultSet.class);
-        given(query.executeQuery()).willReturn(dbResultSet);
-        given(dbResultSet.next()).willReturn(true, false);
-        given(dbResultSet.getString(1)).willReturn(db.getEncoding());
-        return dbResultSet;
+        ResultSet catResultSet = mock(ResultSet.class);
+        given(query.executeQuery()).willReturn(catResultSet);
+        given(catResultSet.next()).willReturn(true, false);
+        given(catResultSet.getString(1)).willReturn("test");
+        given(catResultSet.getString(2)).willReturn("SQL_latin1");
+        return catResultSet;
     }
 
-    private void configureDatabaseInfo(Database database) throws Exception{
-        InspectionContext context = mock(InspectionContext.class);
-        InspectionResults inspectionResults = mock(InspectionResults.class);
-        given(context.getInspectionResults()).willReturn(inspectionResults);
+    private ResultSet configureCatalogInfo(Catalog catalog) throws Exception{
+        ResultSet resultSet = mock(ResultSet.class);
         DatabaseMetaData dbmd = mock(DatabaseMetaData.class);
+
+        ResultSetMetaData rsmd = mock(ResultSetMetaData.class);
+        given(resultSet.getMetaData()).willReturn(rsmd);
         given(getConnection().getMetaData()).willReturn(dbmd);
-        given(inspectionResults.getObject(DATABASE)).willReturn(database);
+        given(getConnection().getMetaData().getCatalogs()).willReturn(resultSet);
+        given(resultSet.next()).willReturn(true, false);
+        given(resultSet.getString("TABLE_CAT")).willReturn("test");
+        return resultSet;
     }
 }

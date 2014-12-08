@@ -34,15 +34,17 @@ import com.nuodb.migrator.jdbc.query.StatementAction;
 import com.nuodb.migrator.jdbc.query.StatementFactory;
 import com.nuodb.migrator.jdbc.query.StatementTemplate;
 
+import java.nio.charset.Charset;
+import java.nio.charset.UnsupportedCharsetException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.HashMap;
 
 import static com.nuodb.migrator.jdbc.metadata.DefaultValue.valueOf;
 import static org.apache.commons.lang3.StringUtils.endsWith;
 import static org.apache.commons.lang3.StringUtils.startsWith;
+import static com.nuodb.migrator.jdbc.metadata.inspector.MSSQLServerDatabaseInspector.formatEncoding;
 
 /**
  * @author Sergey Bushik
@@ -60,6 +62,17 @@ public class MSSQLServerColumnInspector extends SimpleColumnInspector {
             }
             column.setDefaultValue(valueOf(value, true));
         }
+
+        String encoding = formatEncoding(getColumnCollation(inspectionContext, column.getName()));
+        column.setEncoding(encoding != null ? encoding :null);
+        try {
+            if (encoding != null) {
+                Charset colloation = Charset.forName(encoding);
+                column.setCharset(colloation);
+            }
+        } catch (UnsupportedCharsetException unsupportedCharsetException) {
+            unsupportedCharsetException.printStackTrace();
+        }
     }
 
     /** 
@@ -67,10 +80,10 @@ public class MSSQLServerColumnInspector extends SimpleColumnInspector {
     * sys.columns  table 
     */
     @Override
-    protected HashMap<String,String> getColumnCollations(InspectionContext inspectionContext, final String schema, final String table)
+    protected String getColumnCollation(InspectionContext inspectionContext, final String column)
             throws SQLException {
             StatementTemplate template = new StatementTemplate(inspectionContext.getConnection());
-            HashMap<String,String> collationsList = template.executeStatement(
+            String columnCollation = template.executeStatement(
                     new StatementFactory<PreparedStatement>() {
                         @Override
                         public PreparedStatement createStatement(Connection connection) throws SQLException {
@@ -78,21 +91,25 @@ public class MSSQLServerColumnInspector extends SimpleColumnInspector {
                             collationsQuery.column("name");
                             collationsQuery.column("collation_name");
                             collationsQuery.from("sys.columns");
-                            collationsQuery.where("object_id = OBJECT_ID('".concat(schema.concat(".").concat(table)).concat("')"));
+                            collationsQuery.where("name = ?");
                             return connection.prepareStatement(collationsQuery.toString());
                         }
-                    }, new StatementAction<PreparedStatement, HashMap<String,String>>() {
+                    }, new StatementAction<PreparedStatement, String>() {
                         @Override
-                        public HashMap<String,String> executeStatement(PreparedStatement statement) throws SQLException {
-                            ResultSet collationsRS = statement.executeQuery();
-                            HashMap<String,String> collationsTypes = new HashMap<String,String>();
-                            while (collationsRS.next()) {
-                                collationsTypes.put(collationsRS.getString(1),collationsRS.getString(2));
+                        public String executeStatement(PreparedStatement statement) throws SQLException {
+                            if(column != null) {
+                                statement.setString(1, column);
+                                }
+
+                            ResultSet collations = statement.executeQuery();
+                            String collation = null;
+                            if (collations.next()) {
+                                collation = collations.getString(2);
                             }
-                            return collationsTypes;
+                            return collation;
                         }
                     }
             );
-        return collationsList;
+        return columnCollation;
     }
 }

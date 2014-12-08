@@ -27,13 +27,22 @@
  */
 package com.nuodb.migrator.jdbc.metadata.inspector;
 
+import static com.nuodb.migrator.jdbc.metadata.inspector.InspectionResultsUtils.addDatabase;
+import static java.lang.String.format;
+import static org.slf4j.LoggerFactory.getLogger;
+
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
+import org.slf4j.Logger;
+
+import com.nuodb.migrator.jdbc.connection.ConnectionProxy;
 import com.nuodb.migrator.jdbc.metadata.Database;
-import com.nuodb.migrator.jdbc.query.SelectQuery;
+import com.nuodb.migrator.jdbc.metadata.DatabaseInfo;
+import com.nuodb.migrator.jdbc.metadata.DriverInfo;
+import com.nuodb.migrator.jdbc.query.BasicQuery;
 import com.nuodb.migrator.jdbc.query.StatementAction;
 import com.nuodb.migrator.jdbc.query.StatementFactory;
 import com.nuodb.migrator.jdbc.query.StatementTemplate;
@@ -43,6 +52,7 @@ import com.nuodb.migrator.jdbc.query.StatementTemplate;
  */
 public class MSSQLServerDatabaseInspector extends SimpleDatabaseInspector {
 
+    private transient final Logger logger = getLogger(getClass());
     /** 
      * This method is overridden to build a query to fetch Database collation information from MSSQLSERVER 
      * sys.databases table 
@@ -55,16 +65,12 @@ public class MSSQLServerDatabaseInspector extends SimpleDatabaseInspector {
                 new StatementFactory<PreparedStatement>() {
                     @Override
                     public PreparedStatement createStatement(Connection connection) throws SQLException {
-                        SelectQuery collationQuery = new SelectQuery();
-                        collationQuery.column("collation_name");
-                        collationQuery.from("sys.databases");
-                        collationQuery.where("name= ?");
+                        BasicQuery collationQuery = new BasicQuery("SELECT CONVERT(VARCHAR(100), SERVERPROPERTY('Collation'))");
                         return connection.prepareStatement(collationQuery.toString());
                     }
                 }, new StatementAction<PreparedStatement, String>() {
                     @Override
                     public String executeStatement(PreparedStatement statement) throws SQLException {
-                        statement.setString(1, inspectionContext.getConnection().getCatalog());
                         ResultSet collations = statement.executeQuery();
                         String collation = null;
                         if (collations.next()) {
@@ -75,5 +81,43 @@ public class MSSQLServerDatabaseInspector extends SimpleDatabaseInspector {
                 }
             );
         return collation;
+    }
+
+    @Override
+    public void inspect(InspectionContext inspectionContext) throws SQLException {
+        Database database = addDatabase(inspectionContext.getInspectionResults());
+
+        DriverInfo driverInfo = getDriverInfo(inspectionContext);
+        if (logger.isDebugEnabled()) {
+            logger.debug(format("Driver info %s", driverInfo));
+        }
+        database.setDriverInfo(driverInfo);
+
+        DatabaseInfo databaseInfo = getDatabaseInfo(inspectionContext);
+        if (logger.isDebugEnabled()) {
+            logger.debug(format("Database info %s", databaseInfo));
+        }
+        database.setDatabaseInfo(databaseInfo);
+        String encoding = formatEncoding(getCollation(inspectionContext, database));
+        database.setEncoding(encoding);
+
+        database.setDialect(inspectionContext.getDialect());
+        Connection connection = inspectionContext.getConnection();
+        if (connection instanceof ConnectionProxy) {
+            database.setConnectionSpec(((ConnectionProxy) connection).getConnectionSpec());
+        }
+    }
+
+    public static String formatEncoding(String encoding) {
+        if(encoding!=null) {
+            if(encoding.startsWith("SQL")) {
+                String charset[] = encoding.split("_");
+                encoding = charset[1];
+            }else {
+                String charset[] = encoding.split("_");
+                encoding = charset[0];
+            }
+        }
+        return encoding;
     }
 }

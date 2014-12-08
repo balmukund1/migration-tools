@@ -37,6 +37,7 @@ import static org.mockito.Mockito.mock;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNotNull;
 
+import java.nio.charset.Charset;
 import java.sql.DatabaseMetaData;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -72,11 +73,11 @@ public class MSSQLServerColumnInspectorTest extends InspectorTestBase {
     public Object[][] createGetColumnCollationData() throws Exception{
         
         String columnName = "column";
-        
+        Charset l1 = Charset.forName("Latin1");
         Column cloumnCol = createColumn(catalogName, schemaName, tableName, columnName);
         cloumnCol.setTypeName("CHAR");
         cloumnCol.setTypeCode(Types.CHAR);
-        cloumnCol.setEncoding("latin1");        
+        cloumnCol.setCharset(l1);
         return new Object[][] {
                 { cloumnCol 
                     }
@@ -95,7 +96,7 @@ public class MSSQLServerColumnInspectorTest extends InspectorTestBase {
         
         assertNotNull(columns);
         assertEquals(columns.size(), 1);
-        assertEquals(get(columns, 0).getEncoding(), column.getEncoding());
+        assertEquals(get(columns, 0).getCharset(), column.getCharset());
     }
 
     private ResultSet configureColumnCollationResultSet() throws Exception{
