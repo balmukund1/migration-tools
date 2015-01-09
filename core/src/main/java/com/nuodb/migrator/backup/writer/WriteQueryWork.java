@@ -275,13 +275,17 @@ public class WriteQueryWork extends WorkForkJoinTaskBase {
     }
 
     private void checkDatabaseEncoding() {
-        checkCharset("Database ".concat(((TableRowSet)writeQuery.getRowSet()).getCatalog()), 
+        String catalogName = ((TableRowSet)writeQuery.getRowSet()).getCatalog();
+        if(!StringUtils.isEmpty(catalogName))
+            checkCharset("Database ".concat(((TableRowSet)writeQuery.getRowSet()).getCatalog()), 
                 backupWriterContext.getDatabase().getEncoding());
     }
 
     private void checkCatalogEncoding() {
+        String catalogName = ((TableRowSet)writeQuery.getRowSet()).getCatalog();
+        if(!StringUtils.isEmpty(catalogName))
         checkCharset("Catalog ".concat(((TableRowSet)writeQuery.getRowSet()).getCatalog()),
-                backupWriterContext.getDatabase().getCatalogs().iterator().next().getEncoding());
+                ((WriteTable) writeQuery).getTable().getCatalog().getEncoding());
     }
     private void checkColumnEncoding() {
         Table table = ((WriteTable) writeQuery).getTable();
