@@ -55,6 +55,7 @@ public class MetaDataType implements Comparable<MetaDataType>, Serializable {
     public static final MetaDataType CHECK = new MetaDataType(Check.class);
     public static final MetaDataType TRIGGER = new MetaDataType(Trigger.class);
     public static final MetaDataType COLUMN_TRIGGER = new MetaDataType(ColumnTrigger.class);
+    public static final MetaDataType PARTITION = new MetaDataType(Partition.class);
 
     private Class<? extends MetaData> objectType;
 

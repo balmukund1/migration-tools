@@ -76,6 +76,7 @@ public class HasSchemasScriptGenerator extends HasTablesScriptGenerator<HasSchem
             }
             if (useSchema) {
                 scripts.add(getUseSchema(schema, scriptGeneratorManager));
+                addMapPartitionScript(scripts, scriptGeneratorManager);
             }
             scripts.addAll(schemaScript.getValue());
         } else {
@@ -89,6 +90,7 @@ public class HasSchemasScriptGenerator extends HasTablesScriptGenerator<HasSchem
                     scripts.add(schema.getIdentifier() != null ?
                             dialect.getUseSchema(scriptGeneratorManager.getName(schema)) :
                             dialect.getUseSchema(scriptGeneratorManager.getName(schema.getCatalog())));
+                    addMapPartitionScript(scripts, scriptGeneratorManager);
                 }
                 scripts.addAll(schemaScript.getValue());
             }

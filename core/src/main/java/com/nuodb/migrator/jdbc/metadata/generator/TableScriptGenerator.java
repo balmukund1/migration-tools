@@ -40,6 +40,7 @@ import com.nuodb.migrator.jdbc.metadata.ForeignKey;
 import com.nuodb.migrator.jdbc.metadata.Identifiable;
 import com.nuodb.migrator.jdbc.metadata.Index;
 import com.nuodb.migrator.jdbc.metadata.MetaDataType;
+import com.nuodb.migrator.jdbc.metadata.Partition;
 import com.nuodb.migrator.jdbc.metadata.PrimaryKey;
 import com.nuodb.migrator.jdbc.metadata.Sequence;
 import com.nuodb.migrator.jdbc.metadata.Table;
@@ -51,10 +52,13 @@ import com.nuodb.migrator.jdbc.type.JdbcTypeOptions;
 
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.Map;
+import java.util.Map.Entry;
 
 import static com.google.common.collect.Iterables.*;
 import static com.google.common.collect.Lists.newArrayList;
 import static com.google.common.collect.Sets.newLinkedHashSet;
+import static com.google.common.collect.Maps.newLinkedHashMap;
 import static com.nuodb.migrator.jdbc.metadata.IndexUtils.getNonRepeatingIndexes;
 import static com.nuodb.migrator.jdbc.metadata.MetaDataType.*;
 import static com.nuodb.migrator.jdbc.metadata.generator.ScriptGeneratorManager.*;
@@ -235,6 +239,62 @@ public class TableScriptGenerator extends ScriptGeneratorBase<Table> {
         }
     }
 
+    protected String addCreatePartitionScripts(Table table, Collection<String> scripts,
+            ScriptGeneratorManager scriptGeneratorManager) {
+        StringBuilder buffer = new StringBuilder();
+        boolean createPartitions = addCreateScripts(table, PARTITION, scriptGeneratorManager);
+        if (!createPartitions) {
+            return null;
+        }
+        if (table.getPartitionStatus() == true) {
+            Map<String, String> pMap = newLinkedHashMap();
+            Collection<Partition> partitions = table.getPartitions();
+            Iterator<Partition> pIterator = partitions.iterator();
+
+            if (pIterator.hasNext()) {
+                Partition partitionTable = pIterator.next();
+                pMap = partitionTable.getPartitionMap();
+                for (Entry<String, String> entry : pMap.entrySet()) {
+                    partitionMap.put(entry.getKey(), entry.getValue());
+                }
+                buffer.append("\nPARTITION BY ");
+                buffer.append(partitionTable.getPartitionType()).append(" (");
+                buffer.append(partitionTable.getPartitioningColumn())
+                        .append(") ").append(" (");
+                for (Iterator<Partition> iterator = partitions.iterator(); iterator.hasNext();) {
+                    final Partition partition = iterator.next();
+                    if (partition.getPartitionType() == LIST) {
+                        buffer.append(" PARTITION ").append(partition.getName()).append(" VALUES");
+                        String partValue = partition.getValue();
+                        if (partition.getIsdefault() == 1) {
+                            buffer.append(" IN ").append(" (").append(partValue.substring(0,partValue.length())).append(") ");
+                        } else {
+                            buffer.append(" IN ").append(" (").append(partValue.substring(0,partValue.length() - 1)).append(") ");
+                        }
+                    } else if (partition.getPartitionType() == RANGE) {
+                        buffer.append(" PARTITION ").append(partition.getName()).append(" VALUES");
+                        String partValue = partition.getValue();
+                        if (partition.getIsdefault() == 1) {
+                            buffer.append(" LESS THAN ").append("(").append(partValue).append(")");
+                        } else {
+                            buffer.append(" LESS THAN ").append("(").append(partValue).append(")");
+                        }
+                    }
+                    if (iterator.hasNext()) {
+                        buffer.append(", ");
+                    }
+                }
+                buffer.append(')');
+                if (partitionTable.getPartitionType() == DEFAULTPARTITION) {
+                    buffer = new StringBuilder();
+                    buffer.append(" STORE");
+                    buffer.append(" IN ").append(partitionTable.getStorageGroup());
+                }
+            }
+        }
+        return buffer.toString();
+    }
+
     protected void addCreateTableScript(Table table, Collection<String> scripts, ScriptGeneratorManager
             scriptGeneratorManager) {
         boolean createTable = addCreateScripts(table, TABLE, scriptGeneratorManager);
@@ -359,6 +419,9 @@ public class TableScriptGenerator extends ScriptGeneratorBase<Table> {
             }
         }
         buffer.append(')');
+        if (table.getPartitionStatus()) {
+            buffer.append(addCreatePartitionScripts(table, scripts, scriptGeneratorManager));
+        }
         String comment = table.getComment();
         if (!isEmpty(comment)) {
             buffer.append(dialect.getTableComment(comment));

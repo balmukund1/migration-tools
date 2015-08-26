@@ -126,6 +126,10 @@ public class InspectionManager {
         columnTriggerInspector.register(MYSQL, new MySQLColumnTriggerInspector());
         columnTriggerInspector.register(NUODB, new NuoDBColumnTriggerInspector());
         addInspector(columnTriggerInspector);
+
+        InspectorResolver partitionInspector = new InspectorResolver(PARTITION, new SimplePartitionInspector());
+        partitionInspector.register(NUODB, new  NuoDBPartitionInspector());
+        addInspector(partitionInspector);
     }
 
     public InspectionResults inspect(Connection connection) throws SQLException {

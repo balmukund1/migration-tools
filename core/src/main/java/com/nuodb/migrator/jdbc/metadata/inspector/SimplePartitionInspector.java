@@ -25,25 +25,33 @@
  * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.nuodb.migrator.jdbc.metadata;
+package com.nuodb.migrator.jdbc.metadata.inspector;
 
-import static com.google.common.collect.Lists.newArrayList;
-import static com.google.common.collect.Maps.newHashMap;
-import static com.google.common.collect.Maps.newLinkedHashMap;
 
-import java.util.Collection;
-import java.util.Map;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+
+import com.nuodb.migrator.jdbc.metadata.Table;
+import com.nuodb.migrator.jdbc.query.Query;
+
+import static com.nuodb.migrator.jdbc.metadata.MetaDataType.PARTITION;
 
 /**
- * @author Sergey Bushik
+ * @author Mukund
  */
-public interface MetaDataHandler {
+public class SimplePartitionInspector extends TableInspectorBase<Table, TableInspectionScope>{
 
-    public Map<String, String> datatypes = newHashMap();
-    public Collection<String> tableNames = newArrayList();
-    public Map<String, String> partitionMap = newLinkedHashMap();
+    public SimplePartitionInspector(){
+        super(PARTITION ,TableInspectionScope.class);
+    }
 
-    boolean supports(MetaData object);
+    @Override
+    protected Query createQuery(InspectionContext inspectionContext, TableInspectionScope tableInspectionScope) {
+        return null;
+    }
 
-    boolean supports(MetaDataType objectType);
+    @Override
+    protected void processResultSet(InspectionContext inspectionContext, ResultSet partitions) throws SQLException {
+    }
 }
+

@@ -121,6 +121,30 @@ public class HasTablesScriptGenerator<H extends HasTables> extends MetaDataHandl
         }
     }
 
+    protected void addMapPartitionScript(Collection<String> scripts,
+            ScriptGeneratorManager scriptGeneratorManager) {
+        Collection<MetaDataType> objectTypes = scriptGeneratorManager.getObjectTypes();
+        StringBuilder buffer = new StringBuilder();
+        boolean unmapPartition = objectTypes.contains(PARTITION);
+        if (!unmapPartition) {
+            return;
+        }
+        if (!(partitionMap.isEmpty())) {
+            for (Entry<String, String> entry : partitionMap.entrySet()) {
+                if (!entry.getKey().equalsIgnoreCase(entry.getValue())) {
+                    buffer = new StringBuilder();
+                    buffer.append(" UNMAP PARTITION ");
+                    buffer.append(entry.getKey()).append(" IF EXISTS ");
+                    scripts.add(buffer.toString());
+                    buffer = new StringBuilder();
+                    buffer.append(" MAP PARTITION ").append(entry.getKey());
+                    buffer.append(" STORE IN ").append(entry.getValue());
+                    scripts.add(buffer.toString());
+                }
+            }
+        }
+    }
+
     protected GroupScriptsBy getGroupScriptsBy(ScriptGeneratorManager scriptGeneratorManager) {
         GroupScriptsBy groupScriptsBy = (GroupScriptsBy) scriptGeneratorManager.getAttribute(GROUP_SCRIPTS_BY);
         return groupScriptsBy != null ? groupScriptsBy : GroupScriptsBy.TABLE;

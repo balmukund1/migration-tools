@@ -71,6 +71,11 @@ public class ScriptGeneratorManager {
      */
     public static final String SCRIPTS_IN_CREATE_TABLE = "scripts.in.create.table";
 
+    // For Table Partition Type
+    public static final String LIST = "LIST";
+    public static final String RANGE = "RANGE";
+    public static final String DEFAULTPARTITION = "DEFAULTPARTITION";
+
     private String sourceCatalog;
     private String sourceSchema;
     private Session sourceSession;

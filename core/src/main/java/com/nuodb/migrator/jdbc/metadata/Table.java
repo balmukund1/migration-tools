@@ -49,6 +49,7 @@ public class Table extends IdentifiableBase {
     public static final String VIEW = "VIEW";
     public static final String ALIAS = "ALIAS";
     public static final String SYNONYM = "SYNONYM";
+    public static boolean PARTITIONSTATUS = false;
 
     private Database database;
     private Catalog catalog;
@@ -58,6 +59,7 @@ public class Table extends IdentifiableBase {
     private Map<Identifier, Index> indexes = newLinkedHashMap();
     private Collection<ForeignKey> foreignKeys = newLinkedHashSet();
 
+    private Map<Identifier, Partition> partitions = newLinkedHashMap();
     private Collection<Trigger> triggers = newHashSet();
     private PrimaryKey primaryKey;
     private Collection<Check> checks = newHashSet();
@@ -113,6 +115,18 @@ public class Table extends IdentifiableBase {
 
     public Index getIndex(Identifier identifier) {
         return indexes.get(identifier);
+    }
+
+    public void setPartitionStatus(int count) {
+        if (count == 1) {
+            PARTITIONSTATUS = true;
+            } else if(count == 0) {
+            PARTITIONSTATUS = false;
+        }
+    }
+
+    public boolean getPartitionStatus() {
+        return PARTITIONSTATUS;
     }
 
     public Check addCheck(Check check) {
@@ -207,8 +221,40 @@ public class Table extends IdentifiableBase {
         return addColumn(valueOf(name), true);
     }
 
+    public Partition addPartition(String name) {
+        return addPartition(valueOf(name), true);
+    }
+
+    public Partition getPartition(Identifier identifier) {
+        return addPartition(identifier, false);
+    }
+
+    public boolean hasPartition(String name) {
+        return hasPartition(valueOf(name));
+    }
+
+    public boolean hasPartition(Identifier identifier) {
+        return partitions.containsKey(identifier);
+    }
+
+    public Partition addPartition(Identifier identifier) {
+        return addPartition(identifier, true);
+    }
+
     public Column addColumn(Identifier identifier) {
         return addColumn(identifier, true);
+    }
+
+    public Partition addPartition(Identifier identifier, boolean create) {
+        Partition partition = partitions.get(identifier);
+        if (partition == null) {
+            if (create) {
+                partition = addPartition(identifier, partitions.size() + 1);
+            } else {
+                throw new MetaDataException(format("Table %s doesn't have %s partitions", getName(), identifier));
+            }
+        }
+        return partition;
     }
 
     public Column addColumn(Identifier identifier, boolean create) {
@@ -222,6 +268,12 @@ public class Table extends IdentifiableBase {
         }
         return column;
     }
+
+    public Partition addPartition(Identifier identifier, int position ) {
+            Partition partition = new Partition(identifier);
+            partition.setPosition(position);
+            return addPartition(partition);
+        }
 
     public Column addColumn(Identifier identifier, int position) {
         Column column = new Column(identifier);
@@ -248,6 +300,25 @@ public class Table extends IdentifiableBase {
         return columns;
     }
 
+    public Partition addPartition(Partition partition) {
+        partition.setTable(this);
+        partitions.put(partition.getIdentifier(), partition);
+        return partition;
+    }
+
+    public Collection<Partition> getPartitions() {
+        Collection<Partition> partitions = newTreeSet(new Comparator<Partition>() {
+            @Override
+            public int compare(Partition o1, Partition o2) {
+                int names = o1.getName().compareToIgnoreCase(o2.getName());
+                int   positions  = Ints.compare(o1.getPosition(), o2.getPosition());
+                return positions != 0 ? positions : names;
+            }
+        });
+        partitions.addAll(this.partitions.values());
+        return partitions;
+    }
+
     public Collection<Check> getChecks() {
         return checks;
     }
@@ -268,6 +339,10 @@ public class Table extends IdentifiableBase {
         output(indent, buffer, "columns");
         buffer.append(' ');
         output(indent, buffer, getColumns());
+        /*Adding partition relate output*/
+        output(indent, buffer, "partitions");
+        buffer.append(' ');
+        output(indent, buffer, getPartitions());
 
         PrimaryKey primaryKey = getPrimaryKey();
         if (primaryKey != null) {
