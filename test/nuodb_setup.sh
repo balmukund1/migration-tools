@@ -3,7 +3,7 @@
 
 sudo: true
 
-wget -q http://download.nuohub.org/nuodb_2.1.1.10_amd64.deb --output-document=/var/tmp/nuodb.deb
+wget http://download.nuohub.org/nuodb_2.1.1.10_amd64.deb --output-document=/var/tmp/nuodb.deb
 sudo dpkg -i /var/tmp/nuodb.deb
 
 /opt/nuodb/etc/nuoagent stop
