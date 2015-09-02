@@ -1,6 +1,8 @@
 #!/bin/sh
 . ./test/.travis_env
 
+sudo: true
+
 wget -q http://download.nuohub.org/nuodb_2.1.1.10_amd64.deb --output-document=/var/tmp/nuodb.deb
 sudo dpkg -i /var/tmp/nuodb.deb
 
