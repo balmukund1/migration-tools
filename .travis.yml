@@ -1,12 +1,9 @@
 language: java
 
 jdk:
-  - openjdk7
-  - openjdk6
-  - oraclejdk7
+  - openjdk8
+  - oraclejdk8
   
-sudo: true
-
 notifications:
   recipients:
     - bal.mukund4u@gmail.com
