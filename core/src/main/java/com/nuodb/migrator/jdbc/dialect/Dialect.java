@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2014, NuoDB, Inc.
+ * Copyright (c) 2015, NuoDB, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -104,6 +104,8 @@ public interface Dialect {
     RowCountHandler createRowCountHandler(Table table, Column column, String filter, RowCountType rowCountType);
 
     boolean addScriptsInCreateTable(Table table);
+
+    boolean addConstraintsInCreateTable();
 
     String getNullColumnString();
 

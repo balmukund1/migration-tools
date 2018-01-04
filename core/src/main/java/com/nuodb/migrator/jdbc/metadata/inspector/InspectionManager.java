@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2014, NuoDB, Inc.
+ * Copyright (c) 2015, NuoDB, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -69,9 +69,9 @@ public class InspectionManager {
         schemaInspector.register(MSSQL_SERVER, new MSSQLServerSchemaInspector());
         addInspector(schemaInspector);
 
-        InspectorResolver userDefinedInspector = new InspectorResolver(USER_DEFINED, new SimpleUserDefinedInspector());
-        userDefinedInspector.register(ORACLE , new OracleUserDefinedInspector());
-        addInspector(userDefinedInspector);
+        InspectorResolver userDefinedTypeInspector = new InspectorResolver(USER_DEFINED_TYPE, new SimpleUserDefinedTypeInspector());
+        userDefinedTypeInspector.register(ORACLE, new OracleUserDefinedTypeTypeInspector());
+        addInspector(userDefinedTypeInspector);
 
         InspectorResolver tableInspector = new InspectorResolver(TABLE, new SimpleTableInspector());
         tableInspector.register(NUODB, new NuoDBTableInspector());
@@ -87,6 +87,7 @@ public class InspectionManager {
         addInspector(indexIndex);
 
         InspectorResolver primaryKeyInspector = new InspectorResolver(PRIMARY_KEY, new SimplePrimaryKeyInspector());
+        primaryKeyInspector.register(MYSQL, new MySQLPrimaryKeyInspector());
         primaryKeyInspector.register(NUODB, new NuoDBPrimaryKeyInspector());
         primaryKeyInspector.register(ORACLE, new OraclePrimaryKeyInspector());
         addInspector(primaryKeyInspector);

@@ -14,13 +14,6 @@ This tool is designed to assist you in migrating data from supported SQL databas
 
 *These functions tested on MySQL, MSSQL Server, Oracle, PostgreSQL, IBM DB2, Sybase Adaptive Server Enterprise and supposed to work with any JDBC-compliant database.*
 
-## Building from Source ##
-
-    $ git clone https://github.com/nuodb/migration-tools
-    $ cd migration-tools/
-    $ mvn install
-    $ cd assembly/target/nuodb-migrator/
-    $ bin/nuodb-migrator --help
 
 ## Synopsis ##
 
@@ -291,5 +284,3 @@ Example 5: Migrate schema from Microsoft SQL Server "test" database to a NuoDB d
         --target.username=<username> --target.password=<password> --target.schema=hockey \
         --meta.data.foreign.key=false --meta.data.check.constraint=false \
         --identifier.normalizer=standard
-
-[![githalytics.com alpha](https://cruel-carlota.pagodabox.com/6b3314b32dd6c95ab4e2cde9bb3c6f74 "githalytics.com")](http://githalytics.com/nuodb/migration-tools)

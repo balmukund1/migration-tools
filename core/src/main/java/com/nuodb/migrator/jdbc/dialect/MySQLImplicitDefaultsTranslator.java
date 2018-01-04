@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2014, NuoDB, Inc.
+ * Copyright (c) 2015, NuoDB, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -237,5 +237,10 @@ public class MySQLImplicitDefaultsTranslator extends ImplicitDefaultsTranslatorB
 
     public void setSqlModeQuery(String sqlModeQuery) {
         this.sqlModeQuery = sqlModeQuery;
+    }
+
+    @Override
+    protected boolean supportsScript(Script script, TranslationContext context) {
+        return false;
     }
 }

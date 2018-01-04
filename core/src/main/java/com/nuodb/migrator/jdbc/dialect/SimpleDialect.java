@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2014, NuoDB, Inc.
+ * Copyright (c) 2015, NuoDB, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -444,6 +444,11 @@ public class SimpleDialect extends SimpleServiceResolverAware<Dialect> implement
     @Override
     public boolean addScriptsInCreateTable(Table table) {
         return true;
+    }
+
+    @Override
+    public boolean addConstraintsInCreateTable() {
+        return false;
     }
 
     @Override

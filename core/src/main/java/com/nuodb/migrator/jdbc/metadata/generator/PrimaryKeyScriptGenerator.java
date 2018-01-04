@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2014, NuoDB, Inc.
+ * Copyright (c) 2015, NuoDB, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -65,6 +65,15 @@ public class PrimaryKeyScriptGenerator extends ScriptGeneratorBase<PrimaryKey> i
         buffer.append("ALTER TABLE ");
         buffer.append(scriptGeneratorManager.getName(primaryKey.getTable()));
         buffer.append(" ADD ");
+
+        String primaryKeyName = scriptGeneratorManager.getName(primaryKey);
+        if (primaryKeyName != null) {
+            // In nuodb, the CONSTRAINT keyword is only necessary
+            // if you want to name the table constraint
+            buffer.append("CONSTRAINT ");
+            buffer.append(primaryKeyName);
+            buffer.append(" ");
+        }
         buffer.append(getConstraintScript(primaryKey, scriptGeneratorManager));
         return singleton(buffer.toString());
     }

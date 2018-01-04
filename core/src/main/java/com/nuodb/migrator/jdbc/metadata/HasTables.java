@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2014, NuoDB, Inc.
+ * Copyright (c) 2015, NuoDB, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -38,6 +38,6 @@ public interface HasTables extends MetaData {
 
     Collection<Sequence> getSequences();
 
-    Collection<UserDefined> getUserDefined();
+    Collection<UserDefinedType> getUserDefinedTypes();
 
 }

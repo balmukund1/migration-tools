@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2014, NuoDB, Inc.
+ * Copyright (c) 2015, NuoDB, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -49,6 +49,7 @@ import static com.google.common.collect.Sets.newLinkedHashSet;
 import static com.nuodb.migrator.jdbc.metadata.MetaDataType.*;
 import static com.nuodb.migrator.jdbc.metadata.generator.ScriptGeneratorManager.FOREIGN_KEYS;
 import static com.nuodb.migrator.jdbc.metadata.generator.ScriptGeneratorManager.TABLES;
+import static com.nuodb.migrator.jdbc.metadata.generator.ScriptGeneratorManager.UNIQUE_CONSTRAINTS;
 import static com.nuodb.migrator.utils.SequenceUtils.getStandaloneSequences;
 import static java.util.Collections.singleton;
 import static java.lang.String.format;
@@ -191,10 +192,12 @@ public class HasTablesScriptGenerator<H extends HasTables> extends MetaDataHandl
     protected void initScriptGeneratorContext(ScriptGeneratorManager scriptGeneratorManager) {
         scriptGeneratorManager.addAttribute(TABLES, newLinkedHashSet());
         scriptGeneratorManager.addAttribute(FOREIGN_KEYS, HashMultimap.create());
+        scriptGeneratorManager.addAttribute(UNIQUE_CONSTRAINTS, true);
     }
 
     protected void releaseScriptGeneratorContext(ScriptGeneratorManager scriptGeneratorManager) {
         scriptGeneratorManager.removeAttribute(TABLES);
         scriptGeneratorManager.removeAttribute(FOREIGN_KEYS);
+        scriptGeneratorManager.removeAttribute(UNIQUE_CONSTRAINTS);
     }
 }

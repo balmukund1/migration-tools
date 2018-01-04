@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2014, NuoDB, Inc.
+ * Copyright (c) 2015, NuoDB, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -38,6 +38,7 @@ import com.nuodb.migrator.jdbc.metadata.ColumnTrigger;
 import com.nuodb.migrator.jdbc.metadata.DatabaseInfo;
 import com.nuodb.migrator.jdbc.metadata.ForeignKey;
 import com.nuodb.migrator.jdbc.metadata.Identifiable;
+import com.nuodb.migrator.jdbc.metadata.Identifier;
 import com.nuodb.migrator.jdbc.metadata.Index;
 import com.nuodb.migrator.jdbc.metadata.MetaDataType;
 import com.nuodb.migrator.jdbc.metadata.PrimaryKey;
@@ -103,6 +104,13 @@ public class TableScriptGenerator extends ScriptGeneratorBase<Table> {
         Object scriptsInCreateTable = scriptGeneratorManager.getAttribute(SCRIPTS_IN_CREATE_TABLE);
         return scriptsInCreateTable instanceof Boolean ? (Boolean) scriptsInCreateTable : scriptGeneratorManager
                 .getTargetDialect().addScriptsInCreateTable(table);
+    }
+
+    protected boolean addConstraintsInCreateTable(Table table, MetaDataType objectType,
+                                                  ScriptGeneratorManager scriptGeneratorManager) {
+        Object constraintsInCreateTable = scriptGeneratorManager.getAttribute(UNIQUE_CONSTRAINTS);
+        return constraintsInCreateTable instanceof Boolean ? (Boolean) constraintsInCreateTable : scriptGeneratorManager
+                .getTargetDialect().addConstraintsInCreateTable();
     }
 
     protected void addCreateSequencesScripts(Table table, Collection<String> scripts,
@@ -174,7 +182,7 @@ public class TableScriptGenerator extends ScriptGeneratorBase<Table> {
                     nonRepeatingIndex.isUnique() && size(nonRepeatingIndex.getColumns()) == 1 &&
                             !get(nonRepeatingIndex.getColumns(), 0).isNullable() &&
                             dialect.supportsUniqueInCreateTable() && addIndexesInCreateTable;
-            if (!nonRepeatingIndex.isPrimary() && !uniqueInCreateTable) {
+            if (!nonRepeatingIndex.isPrimary() && !nonRepeatingIndex.isUniqueConstraint() && !uniqueInCreateTable) {
                 if (dialect.supportsCreateMultipleIndexes()) {
                     multipleIndexes.add(nonRepeatingIndex);
                 } else {
@@ -217,6 +225,9 @@ public class TableScriptGenerator extends ScriptGeneratorBase<Table> {
             return;
         }
         Collection<Table> tables = (Collection<Table>) scriptGeneratorManager.getAttribute(TABLES);
+        if (tables == null) {
+            return;
+        }
         Multimap<Table, ForeignKey> foreignKeys =
                 (Multimap<Table, ForeignKey>) scriptGeneratorManager.getAttribute(FOREIGN_KEYS);
         for (ForeignKey foreignKey : table.getForeignKeys()) {
@@ -226,7 +237,7 @@ public class TableScriptGenerator extends ScriptGeneratorBase<Table> {
                     !addScripts(foreignTable, scriptGeneratorManager)) {
                 continue;
             }
-            if (tables != null && !tables.contains(primaryTable)) {
+            if (!tables.contains(primaryTable) || !tables.contains(foreignTable)) {
                 foreignKeys.put(primaryTable, foreignKey);
             } else {
                 foreignKeys.remove(primaryTable, foreignKey);
@@ -254,7 +265,7 @@ public class TableScriptGenerator extends ScriptGeneratorBase<Table> {
             tables.add(table);
         }
         boolean addPrimaryKeyInCreateTable = addScriptsInCreateTable(table, PRIMARY_KEY, scriptGeneratorManager);
-        boolean addIndexesInCreateTable = addScriptsInCreateTable(table, INDEX, scriptGeneratorManager);
+        boolean addIndexesInCreateTable = addConstraintsInCreateTable(table, INDEX, scriptGeneratorManager);
         boolean addForeignKeysInCreateTable = addScriptsInCreateTable(table, FOREIGN_KEY, scriptGeneratorManager);
         boolean addChecks = addCreateScripts(table, CHECK, scriptGeneratorManager);
         boolean addSequences = addCreateScripts(table, SEQUENCE, scriptGeneratorManager);
@@ -290,7 +301,9 @@ public class TableScriptGenerator extends ScriptGeneratorBase<Table> {
                     }
                 });
                 boolean unique = index.isPresent() && (!column.isNullable() || dialect.supportsNotNullUnique());
-                if (unique) {
+                boolean uniqueConstraint = index.isPresent() && index.get().isUniqueConstraint();
+                // Create the constraint inline with create table when possible
+                if (unique && !uniqueConstraint) {
                     if (dialect.supportsUniqueInCreateTable()) {
                         buffer.append(' ');
                         buffer.append("UNIQUE");
@@ -305,7 +318,7 @@ public class TableScriptGenerator extends ScriptGeneratorBase<Table> {
             }
             if (addChecks && dialect.supportsColumnCheck()) {
                 for (Check check : column.getChecks()) {
-                    buffer.append(", CHECK ");
+                    buffer.append(" CHECK");
                     buffer.append(dialect.getCheckClause(check.getText()));
                 }
             }
@@ -321,12 +334,24 @@ public class TableScriptGenerator extends ScriptGeneratorBase<Table> {
             PrimaryKey primaryKey = table.getPrimaryKey();
             if (primaryKey != null) {
                 ConstraintScriptGenerator<PrimaryKey> generator = (ConstraintScriptGenerator<PrimaryKey>)
-                        scriptGeneratorManager.getScriptGenerator(primaryKey);
-                buffer.append(", ").append(generator.getConstraintScript(primaryKey, scriptGeneratorManager));
+                    scriptGeneratorManager.getScriptGenerator(primaryKey);
+                String constraint = generator.getConstraintScript(primaryKey, scriptGeneratorManager);
+                if (constraint != null) {
+                    buffer.append(", ");
+                    String primaryKeyName = scriptGeneratorManager.getName(primaryKey);
+                    if (primaryKeyName != null) {
+                        // In NuoDB, the CONSTRAINT keyword is only necessary
+                        // if you want to name the table constraint
+                        buffer.append("CONSTRAINT ");
+                        buffer.append(primaryKeyName);
+                        buffer.append(" ");
+                    }
+                    buffer.append(constraint);
+                }
             }
         }
         if (addIndexesInCreateTable &&
-                (dialect.supportsIndexInCreateTable() && !dialect.supportsCreateMultipleIndexes())) {
+            (dialect.supportsIndexInCreateTable() && dialect.supportsCreateMultipleIndexes())) {
             boolean primary = false;
             for (Index index : indexes) {
                 if (!primary && index.isPrimary()) {
@@ -334,27 +359,46 @@ public class TableScriptGenerator extends ScriptGeneratorBase<Table> {
                     continue;
                 }
                 ConstraintScriptGenerator<Index> generator = (ConstraintScriptGenerator<Index>)
-                        scriptGeneratorManager.getScriptGenerator(index);
+                    scriptGeneratorManager.getScriptGenerator(index);
                 String constraint = generator.getConstraintScript(index, scriptGeneratorManager);
-                if (constraint != null) {
-                    buffer.append(", ").append(constraint);
+                if (constraint != null && index.isUniqueConstraint()) {
+                    buffer.append(", ");
+                    String indexName = scriptGeneratorManager.getName(index);
+                    if (indexName != null) {
+                        // In NuoDB, the CONSTRAINT keyword is only necessary
+                        // if you want to name the table constraint
+                        buffer.append("CONSTRAINT ");
+                        buffer.append(indexName);
+                        buffer.append(" ");
+                    }
+                    buffer.append(constraint);
                 }
-
             }
         }
         if (addForeignKeysInCreateTable) {
             for (ForeignKey foreignKey : table.getForeignKeys()) {
                 ConstraintScriptGenerator<ForeignKey> generator = (ConstraintScriptGenerator<ForeignKey>)
-                        scriptGeneratorManager.getScriptGenerator(foreignKey);
+                    scriptGeneratorManager.getScriptGenerator(foreignKey);
                 String constraint = generator.getConstraintScript(foreignKey, scriptGeneratorManager);
                 if (constraint != null) {
-                    buffer.append(", ").append(constraint);
+                    buffer.append(", ");
+                    String fkName = foreignKey.getName(dialect);
+                    if (fkName != null) {
+                        // In NuoDB, the CONSTRAINT keyword is only necessary
+                        // if you want to name the table constraint
+                        buffer.append("CONSTRAINT ");
+                        buffer.append(fkName);
+                        buffer.append(" ");
+                    }
+                    buffer.append(constraint);
                 }
             }
         }
         if (addChecks && dialect.supportsTableCheck()) {
             for (Check check : table.getChecks()) {
-                buffer.append(", CHECK ");
+                buffer.append(", CONSTRAINT ");
+                buffer.append(check.getName(dialect));
+                buffer.append(" CHECK");
                 buffer.append(dialect.getCheckClause(check.getText()));
             }
         }

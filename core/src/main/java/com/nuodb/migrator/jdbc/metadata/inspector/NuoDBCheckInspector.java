@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2014, NuoDB, Inc.
+ * Copyright (c) 2015, NuoDB, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -52,7 +52,6 @@ public class NuoDBCheckInspector extends TableInspectorBase<Table, TableInspecti
 
     public static final String QUERY =
             "SELECT T.SCHEMA, T.TABLENAME, T.CONSTRAINTNAME, T.CONSTRAINTTEXT FROM SYSTEM.TABLECONSTRAINTS AS T " +
-            "INNER JOIN SYSTEM.FIELDS AS F ON T.SCHEMA = F.SCHEMA AND T.TABLENAME = F.TABLENAME " +
             "WHERE T.SCHEMA=? AND T.TABLENAME=?";
 
     public NuoDBCheckInspector() {
@@ -72,16 +71,15 @@ public class NuoDBCheckInspector extends TableInspectorBase<Table, TableInspecti
         InspectionResults inspectionResults = inspectionContext.getInspectionResults();
         while (checks.next()) {
             Table table = addTable(inspectionResults, null, checks.getString("SCHEMA"), checks.getString("TABLENAME"));
-            Pattern pattern = compile(quote(table.getName() + "$constraint") + "\\d+");
             String constraint = checks.getString("CONSTRAINTNAME");
             Check check = new Check(constraint);
             check.setTable(table);
             check.setText(checks.getString("CONSTRAINTTEXT"));
-            if (pattern.matcher(constraint).matches()) {
-                table.addCheck(check);
-            } else {
-                Column column = table.addColumn(constraint);
+            if (table.hasColumn(constraint)) {
+                Column column = table.getColumn(constraint);
                 column.addCheck(check);
+            } else {
+                table.addCheck(check);
             }
             inspectionResults.addObject(check);
         }

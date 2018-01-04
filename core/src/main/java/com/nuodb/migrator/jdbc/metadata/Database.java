@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2014, NuoDB, Inc.
+ * Copyright (c) 2015, NuoDB, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -199,12 +199,12 @@ public class Database extends IdentifiableBase implements HasSchemas {
     }
 
     @Override
-    public Collection<UserDefined> getUserDefined() {
-        Collection<UserDefined> userDefineds = newArrayList();
+    public Collection<UserDefinedType> getUserDefinedTypes() {
+        Collection<UserDefinedType> userDefinedTypes = newArrayList();
         for (Schema schema : getSchemas()) {
-            userDefineds.addAll(schema.getUserDefined());
+            userDefinedTypes.addAll(schema.getUserDefinedTypes());
         }
-        return userDefineds;
+        return userDefinedTypes;
     }
 
     public Collection<Table> getTables(String tableName) {

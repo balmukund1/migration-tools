@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2014, NuoDB, Inc.
+ * Copyright (c) 2015, NuoDB, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -28,6 +28,7 @@
 package com.nuodb.migrator.jdbc.dialect;
 
 import com.nuodb.migrator.jdbc.metadata.DatabaseInfo;
+import static com.nuodb.migrator.jdbc.metadata.DatabaseInfos.NUODB_206;
 
 /**
  * @author Sergey Bushik
@@ -35,6 +36,7 @@ import com.nuodb.migrator.jdbc.metadata.DatabaseInfo;
 public class NuoDBDialect206 extends NuoDBDialect203 {
 
     public NuoDBDialect206() {
+        super(NUODB_206);
     }
 
     public NuoDBDialect206(DatabaseInfo databaseInfo) {

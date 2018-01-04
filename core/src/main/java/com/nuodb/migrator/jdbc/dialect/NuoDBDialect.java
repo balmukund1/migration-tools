@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2014, NuoDB, Inc.
+ * Copyright (c) 2015, NuoDB, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -63,7 +63,7 @@ public class NuoDBDialect extends SimpleDialect {
     private static final int CONSISTENT_READ = 7;
 
     public NuoDBDialect() {
-        this(NUODB);
+        this(NUODB_200);
     }
 
     public NuoDBDialect(DatabaseInfo databaseInfo) {
@@ -178,6 +178,8 @@ public class NuoDBDialect extends SimpleDialect {
 
     @Override
     protected void initTranslations() {
+        addTranslator(new CurrentTimestampTranslator(NUODB_200,
+                newArrayList("CURRENT_TIMESTAMP", "CURRENT_TIMESTAMP()", "NOW()"), "CURRENT_TIMESTAMP", true));
         addTranslator(new CurrentTimestampTranslator(MYSQL,
                 newArrayList("CURRENT_TIMESTAMP", "CURRENT_TIMESTAMP()", "NOW()", "LOCALTIME", "LOCALTIME()",
                         "LOCALTIMESTAMP", "LOCALTIMESTAMP()"), "NOW"));

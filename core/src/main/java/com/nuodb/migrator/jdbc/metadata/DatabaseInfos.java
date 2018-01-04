@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2014, NuoDB, Inc.
+ * Copyright (c) 2015, NuoDB, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -36,11 +36,12 @@ import org.apache.commons.lang3.StringUtils;
  */
 public interface DatabaseInfos {
     final DatabaseInfo MYSQL = new DatabaseInfo("MySQL");
-    final DatabaseInfo NUODB = new NuoDBDatabaseInfo("NuoDB");
+    final DatabaseInfo NUODB_200 = new NuoDBDatabaseInfo("NuoDB");
     final DatabaseInfo NUODB_203 = new NuoDBDatabaseInfo("NuoDB", null, 2, 0, 29);
     final DatabaseInfo NUODB_204 = new NuoDBDatabaseInfo("NuoDB", null, 2, 0, 30);
     final DatabaseInfo NUODB_205 = new NuoDBDatabaseInfo("NuoDB", null, 2, 0, 31);
     final DatabaseInfo NUODB_206 = new NuoDBDatabaseInfo("NuoDB", null, 2, 0, 32);
+    final DatabaseInfo NUODB = new NuoDBDatabaseInfo("NuoDB", null, 2, 5, 33);
     final DatabaseInfo ORACLE = new DatabaseInfo("Oracle");
     final DatabaseInfo DB2 = new DatabaseInfo("DB2/") {
         @Override

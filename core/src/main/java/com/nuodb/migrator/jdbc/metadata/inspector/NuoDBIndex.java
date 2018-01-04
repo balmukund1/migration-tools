@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2014, NuoDB, Inc.
+ * Copyright (c) 2015, NuoDB, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -52,6 +52,7 @@ public class NuoDBIndex {
     public static final int PRIMARY_KEY = 0;
     public static final int UNIQUE = 1;
     public static final int KEY = 2;
+    public static final int UNIQUECONSTRAINT = 4;
 
     public static Query createQuery(TableInspectionScope tableInspectionScope, int... indexTypes) {
         return createQuery(tableInspectionScope.getSchema(), tableInspectionScope.getTable(), indexTypes);

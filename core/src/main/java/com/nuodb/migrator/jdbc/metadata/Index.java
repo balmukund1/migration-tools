@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2014, NuoDB, Inc.
+ * Copyright (c) 2015, NuoDB, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -43,6 +43,7 @@ public class Index extends ConstraintBase {
 
     private boolean primary;
     private boolean unique;
+    private boolean uniqueConstraint;
     private String filterCondition;
     private SortOrder sortOrder;
     private Map<Integer, Column> columns = Maps.newTreeMap();
@@ -68,6 +69,14 @@ public class Index extends ConstraintBase {
 
     public void setUnique(boolean unique) {
         this.unique = unique;
+    }
+
+    public boolean isUniqueConstraint() {
+        return uniqueConstraint;
+    }
+
+    public void setUniqueConstraint(boolean uniqueConstraint) {
+        this.uniqueConstraint = uniqueConstraint;
     }
 
     public void addColumn(Column column, int position) {

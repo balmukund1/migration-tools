@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2014, NuoDB, Inc.
+ * Copyright (c) 2015, NuoDB, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -55,7 +55,6 @@ import static com.google.common.collect.Iterables.indexOf;
 import static com.google.common.collect.Lists.newArrayList;
 import static com.google.common.collect.Sets.newLinkedHashSet;
 import static com.nuodb.migrator.spec.MetaDataSpec.TABLE_TYPES;
-import static com.nuodb.migrator.utils.Collections.isEmpty;
 import static com.nuodb.migrator.utils.ReflectionUtils.getClassName;
 
 /**

@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2014, NuoDB, Inc.
+ * Copyright (c) 2015, NuoDB, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -132,11 +132,15 @@ public class IndexScriptGenerator extends ScriptGeneratorBase<Index> implements 
         Dialect dialect = scriptGeneratorManager.getTargetDialect();
         StringBuilder buffer = new StringBuilder();
         if (index.isUnique()) {
-            buffer.append("UNIQUE");
-        } else {
-            buffer.append("INDEX");
+            buffer.append("UNIQUE ");
         }
-        buffer.append(" (");
+        if (!index.isUniqueConstraint()) {
+            // CONSATRINT + $NAME + UNIQUE -> UNIQUE CONSTRAINT (type 4)
+            // CONSTRAINT + $NAME + UNIQUE KEY $NAME -> UNIQUE INDEX (type 1)
+            buffer.append("KEY ");
+            buffer.append(scriptGeneratorManager.getName(index));
+        }
+        buffer.append("(");
         boolean nullable = false;
         for (Iterator<Column> iterator = index.getColumns().iterator(); iterator.hasNext(); ) {
             Column column = iterator.next();
